@@ -61,14 +61,26 @@ var clone = function(fn) {
     return fn.bind({});
 };
 
+function printResultsFromResponse(input, checksFile){
+    var checkJson = checkHtmlFile(input, checksFile);
+    console.log(JSON.stringify(checkJson, null, 4));
+}
+
 if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
-        .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+        .option('-u, --url <url>', 'Url to check')
+	.parse(process.argv);
+
+    if(program.url){
+	rest.get(program.url).on('complete', function(result) {
+            printResultsFromResponse(result, program.checks);
+	});
+    }
+    else if(program.file){
+	    printResultsFromResponse(program.file, program.checks);
+    }
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
